@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Web3Provider } from "@/context/web3-context";
 import Header from "@/components/header";
 import { Toaster } from "@/components/ui/toaster";
+import { Web3ModalProvider } from "@/components/web3modal-provider";
 
 const inter = Inter({ 
   subsets: ["latin"], 
@@ -45,17 +46,19 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} ${spaceGrotesk.variable} bg-gray-50 dark:bg-gray-950`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <Web3Provider>
-            {/* Clean Header */}
-            <Header />
-            
-            {/* Main Content */}
-            <main className="min-h-screen">
-              {children}
-            </main>
-            
-            <Toaster />
-          </Web3Provider>
+          <Web3ModalProvider>
+            <Web3Provider>
+              {/* Clean Header */}
+              <Header />
+              
+              {/* Main Content */}
+              <main className="min-h-screen">
+                {children}
+              </main>
+              
+              <Toaster />
+            </Web3Provider>
+          </Web3ModalProvider>
         </ThemeProvider>
       </body>
     </html>

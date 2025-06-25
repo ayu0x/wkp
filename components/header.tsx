@@ -14,11 +14,13 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
 import { Logo } from "@/components/logo"
+import { useWeb3Modal } from '@web3modal/wagmi/react'
 
 export default function Header() {
   const { isConnected, connect, disconnect, account, isCorrectNetwork, switchNetwork, chainId, currentNetwork, isConnecting } = useWeb3()
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const { open } = useWeb3Modal()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -34,6 +36,14 @@ export default function Header() {
 
   const getExplorerUrl = () => {
     return currentNetwork?.explorerUrl ? `${currentNetwork.explorerUrl}/address/${account}` : "#"
+  }
+
+  const handleConnect = async () => {
+    try {
+      await open()
+    } catch (error) {
+      console.error("Failed to open Web3Modal:", error)
+    }
   }
 
   return (
@@ -185,7 +195,7 @@ export default function Header() {
               </DropdownMenu>
             ) : (
               <Button 
-                onClick={connect} 
+                onClick={handleConnect} 
                 className="button-primary h-9 px-4 text-sm rounded-lg" 
                 disabled={isConnecting}
               >
@@ -274,7 +284,7 @@ export default function Header() {
               ) : (
                 <Button 
                   onClick={() => {
-                    connect()
+                    handleConnect()
                     setIsMobileMenuOpen(false)
                   }} 
                   className="button-primary w-full"

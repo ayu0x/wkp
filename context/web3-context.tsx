@@ -1,41 +1,30 @@
 "use client"
 
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
-import { ethers } from "ethers"
+import { createContext, useContext, useEffect, type ReactNode } from "react"
+import { useAccount, useConnect, useDisconnect, useChainId, useSwitchChain } from 'wagmi'
+import { useWeb3Modal } from '@web3modal/wagmi/react'
 import { useToast } from "@/hooks/use-toast"
 import networksConfig from "@/data/networks.json"
-
-// Add type definitions for window.ethereum
-declare global {
-  interface Window {
-    ethereum?: {
-      request: (args: { method: string; params?: any[] }) => Promise<any>
-      on: (eventName: string, handler: (...args: any[]) => void) => void
-      removeListener: (eventName: string, handler: (...args: any[]) => void) => void
-      send: (method: string, params?: any[]) => Promise<any>
-    }
-  }
-}
+import { customChains } from "@/lib/web3modal"
 
 interface Web3ContextType {
   account: string | null
   chainId: number | null
-  provider: ethers.BrowserProvider | null
-  signer: ethers.JsonRpcSigner | null
   isConnecting: boolean
   isConnected: boolean
   isCorrectNetwork: boolean
   currentNetwork: any
-  connect: (isAutoConnect?: boolean) => Promise<void>
+  connect: () => Promise<void>
   disconnect: () => void
   switchNetwork: (targetChainId?: number) => Promise<void>
+  // Legacy properties for backward compatibility
+  provider: null
+  signer: null
 }
 
 const Web3Context = createContext<Web3ContextType>({
   account: null,
   chainId: null,
-  provider: null,
-  signer: null,
   isConnecting: false,
   isConnected: false,
   isCorrectNetwork: false,
@@ -43,6 +32,8 @@ const Web3Context = createContext<Web3ContextType>({
   connect: async () => {},
   disconnect: () => {},
   switchNetwork: async () => {},
+  provider: null,
+  signer: null,
 })
 
 export const useWeb3 = () => useContext(Web3Context)
@@ -51,68 +42,24 @@ interface Web3ProviderProps {
   children: ReactNode
 }
 
-// Local storage key for connection state
-const CONNECTION_KEY = "soneswap_connected"
-
 export const Web3Provider = ({ children }: Web3ProviderProps) => {
-  const [account, setAccount] = useState<string | null>(null)
-  const [chainId, setChainId] = useState<number | null>(null)
-  const [provider, setProvider] = useState<ethers.BrowserProvider | null>(null)
-  const [signer, setSigner] = useState<ethers.JsonRpcSigner | null>(null)
-  const [isConnecting, setIsConnecting] = useState(false)
-  const [isConnected, setIsConnected] = useState(false)
-  const [isCorrectNetwork, setIsCorrectNetwork] = useState(false)
-  const [currentNetwork, setCurrentNetwork] = useState<any>(null)
+  const { address, isConnecting, isConnected } = useAccount()
+  const chainId = useChainId()
+  const { disconnect: wagmiDisconnect } = useDisconnect()
+  const { switchChain } = useSwitchChain()
+  const { open } = useWeb3Modal()
   const { toast } = useToast()
 
   const getNetworkConfig = (chainId: number) => {
     return networksConfig.networks.find(network => network.chainId === chainId)
   }
 
-  const connect = async (isAutoConnect = false) => {
-    if (typeof window === "undefined" || !window.ethereum) {
-      toast({
-        title: "Wallet not found",
-        description: "Please install MetaMask or another Ethereum wallet",
-        variant: "destructive",
-      })
-      return
-    }
+  const currentNetwork = chainId ? getNetworkConfig(chainId) : null
+  const isCorrectNetwork = !!currentNetwork
 
+  const connect = async () => {
     try {
-      setIsConnecting(true)
-      const browserProvider = new ethers.BrowserProvider(window.ethereum)
-      const accounts = await browserProvider.send("eth_requestAccounts", [])
-      const network = await browserProvider.getNetwork()
-      const userSigner = await browserProvider.getSigner()
-      const currentChainId = Number(network.chainId)
-      const networkConfig = getNetworkConfig(currentChainId)
-
-      setProvider(browserProvider)
-      setAccount(accounts[0])
-      setChainId(currentChainId)
-      setSigner(userSigner)
-      setIsConnected(true)
-      setCurrentNetwork(networkConfig)
-      setIsCorrectNetwork(!!networkConfig)
-
-      // Save connection state to localStorage
-      localStorage.setItem(CONNECTION_KEY, "true")
-
-      if (!isAutoConnect) {
-        toast({
-          title: "Connected",
-          description: "Wallet connected successfully",
-        })
-      }
-
-      if (!networkConfig) {
-        toast({
-          title: "Unsupported Network",
-          description: "Please switch to a supported network",
-          variant: "destructive",
-        })
-      }
+      await open()
     } catch (error) {
       console.error("Connection error:", error)
       toast({
@@ -120,14 +67,22 @@ export const Web3Provider = ({ children }: Web3ProviderProps) => {
         description: "Failed to connect wallet",
         variant: "destructive",
       })
-    } finally {
-      setIsConnecting(false)
+    }
+  }
+
+  const disconnect = () => {
+    try {
+      wagmiDisconnect()
+      toast({
+        title: "Disconnected",
+        description: "Wallet disconnected",
+      })
+    } catch (error) {
+      console.error("Disconnect error:", error)
     }
   }
 
   const switchNetwork = async (targetChainId?: number) => {
-    if (!window.ethereum) return
-
     try {
       const chainIdToSwitch = targetChainId || networksConfig.networks[0].chainId
       const networkConfig = getNetworkConfig(chainIdToSwitch)
@@ -136,30 +91,12 @@ export const Web3Provider = ({ children }: Web3ProviderProps) => {
         throw new Error("Network not supported")
       }
 
-      try {
-        await window.ethereum.request({
-          method: "wallet_switchEthereumChain",
-          params: [{ chainId: `0x${chainIdToSwitch.toString(16)}` }],
-        })
-      } catch (switchError: any) {
-        // This error code indicates that the chain has not been added to MetaMask
-        if (switchError.code === 4902) {
-          await window.ethereum.request({
-            method: "wallet_addEthereumChain",
-            params: [
-              {
-                chainId: `0x${chainIdToSwitch.toString(16)}`,
-                chainName: networkConfig.name,
-                rpcUrls: [networkConfig.rpcUrl],
-                nativeCurrency: networkConfig.nativeCurrency,
-                blockExplorerUrls: [networkConfig.explorerUrl],
-              },
-            ],
-          })
-        } else {
-          throw switchError
-        }
-      }
+      await switchChain({ chainId: chainIdToSwitch })
+      
+      toast({
+        title: "Network switched",
+        description: `Switched to ${networkConfig.name}`,
+      })
     } catch (error) {
       console.error("Error switching network:", error)
       toast({
@@ -170,92 +107,32 @@ export const Web3Provider = ({ children }: Web3ProviderProps) => {
     }
   }
 
-  const disconnect = () => {
-    setAccount(null)
-    setChainId(null)
-    setProvider(null)
-    setSigner(null)
-    setIsConnected(false)
-    setIsCorrectNetwork(false)
-    setCurrentNetwork(null)
-
-    // Clear connection state from localStorage on explicit disconnect
-    localStorage.removeItem(CONNECTION_KEY)
-
-    toast({
-      title: "Disconnected",
-      description: "Wallet disconnected",
-    })
-  }
-
-  // Auto-connect on page load if previously connected
+  // Show connection success toast
   useEffect(() => {
-    const checkConnection = async () => {
-      if (typeof window === "undefined") return
-
-      const wasConnected = localStorage.getItem(CONNECTION_KEY) === "true"
-
-      if (wasConnected && window.ethereum) {
-        try {
-          // Check if already connected to avoid unnecessary prompts
-          const browserProvider = new ethers.BrowserProvider(window.ethereum)
-          const accounts = await browserProvider.send("eth_accounts", [])
-
-          if (accounts.length > 0) {
-            // User is still connected to MetaMask, reconnect silently
-            await connect(true)
-          } else {
-            // User disconnected from MetaMask side, clear our state
-            localStorage.removeItem(CONNECTION_KEY)
-          }
-        } catch (error) {
-          console.error("Auto-connect error:", error)
-          localStorage.removeItem(CONNECTION_KEY)
-        }
-      }
+    if (isConnected && address) {
+      toast({
+        title: "Connected",
+        description: "Wallet connected successfully",
+      })
     }
+  }, [isConnected, address, toast])
 
-    checkConnection()
-  }, [])
-
+  // Show network warning
   useEffect(() => {
-    const handleAccountsChanged = (accounts: string[]) => {
-      if (accounts.length === 0) {
-        disconnect()
-      } else if (accounts[0] !== account) {
-        setAccount(accounts[0])
-      }
+    if (isConnected && !isCorrectNetwork && chainId) {
+      toast({
+        title: "Unsupported Network",
+        description: "Please switch to a supported network",
+        variant: "destructive",
+      })
     }
-
-    const handleChainChanged = (chainIdHex: string) => {
-      const newChainId = Number(chainIdHex)
-      const networkConfig = getNetworkConfig(newChainId)
-      setChainId(newChainId)
-      setCurrentNetwork(networkConfig)
-      setIsCorrectNetwork(!!networkConfig)
-      window.location.reload()
-    }
-
-    if (typeof window !== "undefined" && window.ethereum) {
-      window.ethereum.on("accountsChanged", handleAccountsChanged)
-      window.ethereum.on("chainChanged", handleChainChanged)
-    }
-
-    return () => {
-      if (typeof window !== "undefined" && window.ethereum) {
-        window.ethereum.removeListener("accountsChanged", handleAccountsChanged)
-        window.ethereum.removeListener("chainChanged", handleChainChanged)
-      }
-    }
-  }, [account])
+  }, [isConnected, isCorrectNetwork, chainId, toast])
 
   return (
     <Web3Context.Provider
       value={{
-        account,
-        chainId,
-        provider,
-        signer,
+        account: address || null,
+        chainId: chainId || null,
         isConnecting,
         isConnected,
         isCorrectNetwork,
@@ -263,6 +140,9 @@ export const Web3Provider = ({ children }: Web3ProviderProps) => {
         connect,
         disconnect,
         switchNetwork,
+        // Legacy properties for backward compatibility
+        provider: null,
+        signer: null,
       }}
     >
       {children}

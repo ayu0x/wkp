@@ -1,9 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { ethers } from "ethers"
-import { useWeb3 } from "@/context/web3-context"
-import erc20Abi from "@/data/abis/erc20.json"
+import { useAccount, useBalance, useReadContract } from 'wagmi'
+import { erc20Abi } from 'viem'
 
 interface Token {
   address: string
@@ -12,55 +11,52 @@ interface Token {
 }
 
 export function useTokenBalance(token: Token | null) {
-  const { provider, account, isConnected, chainId } = useWeb3()
-  const [balance, setBalance] = useState<string>("0")
+  const { address: account, isConnected, chainId } = useAccount()
   const [formattedBalance, setFormattedBalance] = useState<string>("0")
-  const [isLoading, setIsLoading] = useState(false)
+
+  // Native token balance
+  const { data: nativeBalance, isLoading: isLoadingNative } = useBalance({
+    address: account,
+    query: {
+      enabled: !!account && !!token?.isNative && isConnected,
+      refetchInterval: 15000,
+    }
+  })
+
+  // ERC20 token balance
+  const { data: erc20Balance, isLoading: isLoadingErc20 } = useReadContract({
+    address: token?.address as `0x${string}`,
+    abi: erc20Abi,
+    functionName: 'balanceOf',
+    args: account ? [account] : undefined,
+    query: {
+      enabled: !!account && !!token && !token.isNative && isConnected,
+      refetchInterval: 15000,
+    }
+  })
 
   useEffect(() => {
-    const fetchBalance = async () => {
-      if (!provider || !account || !token || !isConnected) {
-        setBalance("0")
-        setFormattedBalance("0")
-        return
-      }
-
-      try {
-        setIsLoading(true)
-        let rawBalance: ethers.BigNumberish = "0"
-
-        if (token.isNative) {
-          // Fetch native ETH balance
-          rawBalance = await provider.getBalance(account)
-        } else {
-          // Fetch ERC20 token balance
-          const tokenContract = new ethers.Contract(token.address, erc20Abi, provider)
-          rawBalance = await tokenContract.balanceOf(account)
-        }
-
-        setBalance(rawBalance.toString())
-
-        // Format the balance for display
-        const formatted = ethers.formatUnits(rawBalance, token.decimals)
-
-        // Don't apply additional formatting here - let the component handle display formatting
-        setFormattedBalance(formatted)
-      } catch (error) {
-        console.error("Error fetching token balance:", error)
-        setBalance("0")
-        setFormattedBalance("0")
-      } finally {
-        setIsLoading(false)
-      }
+    if (!token || !isConnected) {
+      setFormattedBalance("0")
+      return
     }
 
-    fetchBalance()
+    if (token.isNative && nativeBalance) {
+      setFormattedBalance(nativeBalance.formatted)
+    } else if (!token.isNative && erc20Balance) {
+      // Format ERC20 balance
+      const balance = Number(erc20Balance) / Math.pow(10, token.decimals)
+      setFormattedBalance(balance.toString())
+    } else {
+      setFormattedBalance("0")
+    }
+  }, [token, nativeBalance, erc20Balance, isConnected])
 
-    // Set up an interval to refresh the balance every 15 seconds
-    const intervalId = setInterval(fetchBalance, 15000)
+  const isLoading = token?.isNative ? isLoadingNative : isLoadingErc20
 
-    return () => clearInterval(intervalId)
-  }, [provider, account, token, isConnected, chainId])
-
-  return { balance, formattedBalance, isLoading }
+  return { 
+    balance: formattedBalance, 
+    formattedBalance, 
+    isLoading 
+  }
 }
