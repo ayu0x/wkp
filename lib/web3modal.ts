@@ -1,4 +1,5 @@
-import { createWeb3Modal, defaultWagmiConfig } from '@web3modal/wagmi/react'
+import { createWeb3Modal } from '@web3modal/wagmi/react'
+import { defaultWagmiConfig } from '@web3modal/wagmi'
 import { mainnet, sepolia } from 'wagmi/chains'
 import networksConfig from '@/data/networks.json'
 import type { Chain } from 'wagmi/chains'
@@ -51,7 +52,7 @@ const wagmiConfig = defaultWagmiConfig({
   enableCoinbase: true,
 })
 
-// Create Web3Modal instance
+// Initialize Web3Modal immediately when module is imported
 createWeb3Modal({ 
   wagmiConfig, 
   projectId,
