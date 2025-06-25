@@ -1,0 +1,11 @@
+{
+  "name": "Soneium",
+  "chainId": 1868,
+  "rpcUrl": "https://rpc.soneium.org/",
+  "parentChain": "Ethereum",
+  "nativeCurrency": {
+    "name": "ETH",
+    "symbol": "ETH",
+    "decimals": 18
+  }
+}

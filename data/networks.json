@@ -1,0 +1,139 @@
+{
+  "networks": [
+    {
+      "name": "Soneium",
+      "chainId": 1868,
+      "rpcUrl": "https://rpc.soneium.org/",
+      "explorerUrl": "https://explorer.soneium.org",
+      "parentChain": "Ethereum",
+      "logoUrl": "https://pbs.twimg.com/profile_images/1911445630959943680/lzpY1muL_400x400.jpg",
+      "nativeCurrency": {
+        "name": "ETH",
+        "symbol": "ETH",
+        "decimals": 18
+      },
+      "contracts": {
+        "WETH": {
+          "address": "0x4200000000000000000000000000000000000006",
+          "symbol": "WETH",
+          "name": "Wrapped ETH",
+          "decimals": 18
+        },
+        "FACTORY": {
+          "address": "0xa7F62B3D43dFa54CcAAF4a15BCB6719D501Da300"
+        },
+        "ROUTER": {
+          "address": "0xc5b000D203546bFEA078c1C39bDEe4A70259BBb3"
+        }
+      }
+    },
+    {
+      "name": "B3",
+      "chainId": 8333,
+      "rpcUrl": "https://mainnet-rpc.b3.fun/http",
+      "explorerUrl": "https://explorer.b3.fun",
+      "parentChain": "Ethereum",
+      "logoUrl": "https://pbs.twimg.com/profile_images/1799953955151060992/ckgfRgvZ_400x400.jpg",
+      "nativeCurrency": {
+        "name": "ETH",
+        "symbol": "ETH",
+        "decimals": 18
+      },
+      "contracts": {
+        "WETH": {
+          "address": "0x55577e04DAe968f6A1c06C6D74De834c294D2B3E",
+          "symbol": "WETH",
+          "name": "Wrapped ETH",
+          "decimals": 18
+        },
+        "FACTORY": {
+          "address": "0x3f6D80eB7518A4eB28c0Eb7d36c9Fa9B7b1b5b8F"
+        },
+        "ROUTER": {
+          "address": "0x52A889D97a5DF4C1D5190d936Fe756f0E2Cd975f"
+        }
+      }
+    },
+    {
+      "name": "Unichain",
+      "chainId": 130,
+      "rpcUrl": "https://unichain.drpc.org",
+      "explorerUrl": "https://uniscan.xyz",
+      "parentChain": "Ethereum",
+      "logoUrl": "https://pbs.twimg.com/profile_images/1844360745649057798/iwEWAS02_400x400.jpg",
+      "nativeCurrency": {
+        "name": "ETH",
+        "symbol": "ETH",
+        "decimals": 18
+      },
+      "contracts": {
+        "WETH": {
+          "address": "0x4200000000000000000000000000000000000006",
+          "symbol": "WETH",
+          "name": "Wrapped ETH",
+          "decimals": 18
+        },
+        "FACTORY": {
+          "address": "0x5Fc51f0269cfC47F048c1f5c4DcA077999e60020"
+        },
+        "ROUTER": {
+          "address": "0xB573b2D9Bf771490De698799ab3E4f726de78994"
+        }
+      }
+    },
+    {
+      "name": "Inkonchain",
+      "chainId": 57073,
+      "rpcUrl": "https://rpc-gel.inkonchain.com",
+      "explorerUrl": "https://explorer.inkonchain.com/",
+      "parentChain": "Ethereum",
+      "logoUrl": "https://pbs.twimg.com/profile_images/1851260672354480128/K6ZudYbl_400x400.jpg",
+      "nativeCurrency": {
+        "name": "ETH",
+        "symbol": "ETH",
+        "decimals": 18
+      },
+      "contracts": {
+        "WETH": {
+          "address": "0x4200000000000000000000000000000000000006",
+          "symbol": "WETH",
+          "name": "Wrapped ETH",
+          "decimals": 18
+        },
+        "FACTORY": {
+          "address": "0x820BD6Bc3164b65437D2dE3Bd28E2c485fE45B70"
+        },
+        "ROUTER": {
+          "address": "0x5C33f4a1FE649128e875132f3e719506019a0162"
+        }
+      }
+    },
+    {
+      "name": "Abstract",
+      "chainId": 2741,
+      "rpcUrl": "https://api.mainnet.abs.xyz",
+      "explorerUrl": "https://abscan.org",
+      "parentChain": "Ethereum",
+      "logoUrl": "https://pbs.twimg.com/profile_images/1925544324525150208/26svZowu_400x400.jpg",
+      "nativeCurrency": {
+        "name": "ETH",
+        "symbol": "ETH",
+        "decimals": 18
+      },
+      "contracts": {
+        "WETH": {
+          "address": "0x3439153eb7af838ad19d56e1571fbd09333c2809",
+          "symbol": "WETH",
+          "name": "Wrapped ETH",
+          "decimals": 18
+        },
+        "FACTORY": {
+          "address": "0x6e09A0e03C0011ecbd096E808d8Ea7Bf56B277d8"
+        },
+        "ROUTER": {
+          "address": "0x950D74DcfE9E2afB70804828778112A08b362fA3"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "WETH": {
+    "address": "0x4200000000000000000000000000000000000006",
+    "symbol": "WETH",
+    "name": "Wrapped ETH",
+    "decimals": 18
+  },
+  "FACTORY": {
+    "address": "0xa7F62B3D43dFa54CcAAF4a15BCB6719D501Da300"
+  },
+  "ROUTER": {
+    "address": "0xc5b000D203546bFEA078c1C39bDEe4A70259BBb3"
+  }
+}
